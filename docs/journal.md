@@ -98,6 +98,27 @@ The project will require the following programming concepts:
 
 ---
 
+## 5. Target Audience and User Role
+
+The target audience of the system includes data analysts, data scientists, business intelligence professionals, students, and developers who regularly work with CSV datasets.
+
+The primary user role is the Data Quality Inspector User. This user provides a CSV file, starts the analysis process, and reviews the generated data quality report.
+
+The system is designed for individual data quality inspection. At this stage, no separate administrator role or multi-user access control is planned.
+
+---
+
+## 6. Typical User Scenario
+
+A typical user scenario is:
+
+1. The user has a CSV file that needs to be checked before analysis.
+2. The user provides the file path to the system.
+3. The CSV Reader Tool loads the dataset.
+4. The Data Quality Agent coordinates the inspection tools.
+5. The tools check missing values, duplicates, data types, outliers, and category consistency.
+6. The Report Generator Tool creates a structured report.
+7. The user reviews the report and decides how to clean or improve the dataset.
 ## Step 1 Progress Summary
 
 In Step 1, the project idea was selected and described. The planned system goal, agent-based workflow, planned tools, and preliminary programming concepts were defined. The next step will be to start implementing the basic CSV reading and data quality checking functionality.
