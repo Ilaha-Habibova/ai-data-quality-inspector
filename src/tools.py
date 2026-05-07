@@ -68,16 +68,47 @@ def check_missing_values(dataframe: pd.DataFrame) -> Dict[str, Any]:
 
 def check_duplicate_rows(dataframe: pd.DataFrame) -> Dict[str, Any]:
     """
-    Detects fully duplicated rows in the dataset.
+    Detects exact duplicate rows and possible duplicate records.
 
-    A row is considered duplicated only if all column values are the same
-    as a previous row.
+    Exact duplicate rows:
+    - all column values are the same.
+
+    Possible duplicate records:
+    - identifier columns such as id or customer_id are ignored,
+    - the remaining data is the same,
+    - this may indicate that the same real-world record appears twice
+      with different identifiers.
     """
-    duplicate_rows = dataframe[dataframe.duplicated()]
+    exact_duplicate_rows = dataframe[dataframe.duplicated()]
+
+    identifier_columns = [
+        column
+        for column in dataframe.columns
+        if column.lower() == "id" or column.lower().endswith("_id")
+    ]
+
+    comparison_columns = [
+        column
+        for column in dataframe.columns
+        if column not in identifier_columns
+    ]
+
+    if comparison_columns:
+        possible_duplicate_mask = (
+            dataframe.duplicated(subset=comparison_columns)
+            & ~dataframe.duplicated()
+        )
+        possible_duplicate_rows = dataframe[possible_duplicate_mask]
+    else:
+        possible_duplicate_rows = pd.DataFrame()
 
     return {
-        "total_duplicate_rows": int(len(duplicate_rows)),
-        "duplicate_row_indexes": duplicate_rows.index.tolist(),
+        "total_duplicate_rows": int(len(exact_duplicate_rows)),
+        "duplicate_row_indexes": exact_duplicate_rows.index.tolist(),
+        "possible_duplicate_records": int(len(possible_duplicate_rows)),
+        "possible_duplicate_record_indexes": possible_duplicate_rows.index.tolist(),
+        "ignored_identifier_columns": identifier_columns,
+        "comparison_columns": comparison_columns,
     }
 
 
@@ -251,14 +282,33 @@ def generate_report(results: Dict[str, Any]) -> str:
             report.append(f"- Column `{column}` has {count} missing value(s).")
     report.append("")
 
-    report.append("## Duplicate Rows")
-    if duplicates["total_duplicate_rows"] == 0:
-        report.append("- No duplicate rows were found.")
+    report.append("## Duplicate Rows and Records")
+
+    exact_duplicates = duplicates["total_duplicate_rows"]
+    possible_duplicates = duplicates["possible_duplicate_records"]
+
+    if exact_duplicates == 0 and possible_duplicates == 0:
+        report.append("- No exact duplicate rows or possible duplicate records were found.")
     else:
-        report.append(f"- Duplicate rows found: {duplicates['total_duplicate_rows']}")
-        report.append(
-            f"- Duplicate row indexes: {duplicates['duplicate_row_indexes']}"
-        )
+        if exact_duplicates > 0:
+            report.append(f"- Exact duplicate rows found: {exact_duplicates}")
+            report.append(
+                f"- Exact duplicate row indexes: {duplicates['duplicate_row_indexes']}"
+            )
+
+        if possible_duplicates > 0:
+            report.append(f"- Possible duplicate records found: {possible_duplicates}")
+            report.append(
+                f"- Possible duplicate record indexes: "
+                f"{duplicates['possible_duplicate_record_indexes']}"
+            )
+
+            if duplicates["ignored_identifier_columns"]:
+                report.append(
+                    f"- Identifier columns ignored during possible duplicate check: "
+                    f"{duplicates['ignored_identifier_columns']}"
+                )
+
     report.append("")
 
     report.append("## Data Types")
@@ -302,7 +352,8 @@ def generate_report(results: Dict[str, Any]) -> str:
 
     report.append("## Recommendations")
     report.append("- Review and handle missing values.")
-    report.append("- Remove duplicate rows if they are not intentional.")
+    report.append("- Remove exact duplicate rows if they are not intentional.")
+    report.append("- Review possible duplicate records where only identifier values differ.")
     report.append("- Check possible outliers in numeric columns.")
     report.append("- Standardize inconsistent text categories.")
     report.append("- Confirm that detected data types match the real meaning of each column.")
