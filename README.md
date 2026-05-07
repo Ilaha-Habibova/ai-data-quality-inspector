@@ -4,7 +4,7 @@
 
 AI Data Quality Inspector for CSV Files is a Python-based AI-assisted software system designed to analyze CSV datasets and detect common data quality problems.
 
-The system helps users quickly assess whether a dataset is clean, reliable, and ready for further use in data analysis, reporting, dashboards, or machine learning. It reduces the need for manual data checking by automatically detecting common issues and generating a structured data quality report.
+The system helps users quickly assess whether a dataset is clean, reliable, and ready for further use in data analysis, reporting, dashboards, or machine learning. It reduces manual data checking by automatically detecting common issues and generating a structured data quality report.
 
 ## System Purpose
 
@@ -35,62 +35,107 @@ This user can:
 
 The system is designed for individual data quality review, so no separate administrator or multi-user access roles are planned at this stage.
 
-## Planned Features
+## Implemented Features
 
-The system is planned to detect:
+The current prototype can:
 
-- missing values,
-- duplicate rows,
-- possible wrong data types,
-- invalid or suspicious values,
-- numeric outliers,
-- inconsistent text categories,
-- empty or low-quality columns.
+- read a CSV file,
+- show dataset overview,
+- detect missing values,
+- detect duplicate rows,
+- inspect column data types,
+- detect numeric outliers,
+- detect inconsistent text categories,
+- detect empty or low-quality columns,
+- generate a Markdown data quality report.
 
 ## Agent-Based Approach
 
-The project will use an agent-based workflow. A central **Data Quality Agent** will coordinate several specialized tools. Each tool will perform one specific task, such as reading the CSV file, checking missing values, detecting duplicates, analyzing data types, or generating the final report.
+The project uses an agent-based workflow. A central **Data Quality Agent** coordinates several specialized tools. Each tool performs one specific task, such as reading the CSV file, checking missing values, detecting duplicates, analyzing data types, detecting outliers, or generating the final report.
 
-The Data Quality Agent will collect the results from all tools, interpret the detected problems, and organize them into a clear final report.
+The Data Quality Agent collects the results from all tools, organizes them, and returns a final structured data quality report.
 
-## Planned Workflow
+## Current Workflow
 
 1. The user provides a CSV file path.
-2. The CSV Reader Tool loads the dataset.
-3. The Data Quality Agent coordinates the analysis.
-4. Inspection tools check different data quality problems.
-5. The Report Generator Tool creates a structured final report.
-6. The user reviews the report and follows the suggested cleaning actions.
+2. The CSV Reader Tool loads the dataset into a pandas DataFrame.
+3. The Data Quality Agent calls the inspection tools.
+4. Each tool analyzes a specific quality aspect.
+5. The Report Generator Tool creates a Markdown report.
+6. The report is printed in the terminal and saved as `data_quality_report.md`.
 
-## Planned Tools
+## Implemented Tools
 
 | Tool | Purpose |
 |---|---|
 | CSV Reader Tool | Loads the CSV file into the system. |
+| Dataset Overview Tool | Shows number of rows, columns, column names, and data types. |
 | Missing Value Tool | Detects empty or missing values in each column. |
 | Duplicate Checker Tool | Finds repeated rows in the dataset. |
-| Data Type Inspector Tool | Identifies numeric, text, date-like, and mixed-type columns. |
-| Outlier Detection Tool | Detects unusual numeric values. |
+| Data Type Inspector Tool | Identifies numeric, text, and date-like columns. |
+| Outlier Detection Tool | Detects unusual numeric values using the IQR method. |
 | Category Consistency Tool | Finds inconsistent text categories, such as different capitalization or spelling. |
 | Column Quality Tool | Detects empty or low-quality columns. |
 | Report Generator Tool | Creates the final structured data quality report. |
 
 ## Technologies
 
-The planned technologies are:
+- Python
+- pandas
+- pytest
+- Git
+- GitHub
 
-- Python,
-- pandas,
-- pytest,
-- Git,
-- GitHub.
+## Project Structure
 
-## Data Handling
+```text
+ai-data-quality-inspector/
+│
+├── README.md
+├── requirements.txt
+├── .gitignore
+│
+├── docs/
+│   └── journal.md
+│
+├── data/
+│   └── dirty_sample.csv
+│
+├── src/
+│   ├── main.py
+│   ├── agent.py
+│   └── tools.py
+│
+└── tests/
+    └── test_tools.py
+```
 
-The system will process CSV files directly in memory using pandas DataFrames. The user data will not be permanently stored in a database during the first version of the project.
+## How to Run the Current Prototype
 
-The generated report may be displayed in the terminal and later saved as a text or Markdown file.
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the program from the project root folder:
+
+```bash
+python src/main.py
+```
+
+When the program asks for a CSV file path, press Enter to use the sample file:
+
+```text
+data/dirty_sample.csv
+```
+
+Run tests:
+
+```bash
+pytest
+```
 
 ## Current Status
 
-Step 1 completed: planned system description, system goal, target audience, agent-based approach, planned tools, and preliminary programming concepts.
+Step 2 completed: first working prototype implemented. The system can read a CSV file, call multiple inspection tools through the Data Quality Agent, and generate a structured Markdown report.
