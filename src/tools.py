@@ -7,7 +7,7 @@ detecting outliers, checking category consistency, and generating reports.
 """
 
 import os
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pandas as pd
 
@@ -28,7 +28,7 @@ def read_csv_file(file_path: str) -> pd.DataFrame:
     try:
         dataframe = pd.read_csv(file_path)
     except pd.errors.EmptyDataError:
-        raise ValueError("The CSV file is empty.")
+        raise ValueError("The CSV file is empty.") from None
 
     if dataframe.empty:
         raise ValueError("The CSV file does not contain any rows.")
@@ -53,6 +53,7 @@ def check_missing_values(dataframe: pd.DataFrame) -> Dict[str, Any]:
     Checks missing values in each column.
     """
     missing_counts = dataframe.isnull().sum()
+
     missing_columns = {
         column: int(count)
         for column, count in missing_counts.items()
@@ -67,7 +68,10 @@ def check_missing_values(dataframe: pd.DataFrame) -> Dict[str, Any]:
 
 def check_duplicate_rows(dataframe: pd.DataFrame) -> Dict[str, Any]:
     """
-    Detects duplicate rows in the dataset.
+    Detects fully duplicated rows in the dataset.
+
+    A row is considered duplicated only if all column values are the same
+    as a previous row.
     """
     duplicate_rows = dataframe[dataframe.duplicated()]
 
@@ -80,17 +84,34 @@ def check_duplicate_rows(dataframe: pd.DataFrame) -> Dict[str, Any]:
 def inspect_data_types(dataframe: pd.DataFrame) -> Dict[str, Any]:
     """
     Inspects and classifies column data types.
+
+    Columns are classified as:
+    - numeric
+    - date-like
+    - text
+
+    Date-like columns are detected using a clear date format to avoid
+    pandas date parsing warnings.
     """
     type_result = {}
 
     for column in dataframe.columns:
         series = dataframe[column].dropna()
 
-        if pd.api.types.is_numeric_dtype(series):
+        if series.empty:
+            detected_type = "empty"
+        elif pd.api.types.is_numeric_dtype(series):
             detected_type = "numeric"
         else:
-            converted_dates = pd.to_datetime(series, errors="coerce")
-            valid_date_ratio = converted_dates.notna().mean() if len(series) > 0 else 0
+            text_series = series.astype(str).str.strip()
+
+            converted_dates = pd.to_datetime(
+                text_series,
+                errors="coerce",
+                format="%Y-%m-%d",
+            )
+
+            valid_date_ratio = converted_dates.notna().mean()
 
             if valid_date_ratio >= 0.6:
                 detected_type = "date-like"
@@ -110,17 +131,25 @@ def detect_outliers(dataframe: pd.DataFrame) -> Dict[str, Any]:
     numeric_columns = dataframe.select_dtypes(include="number").columns
 
     for column in numeric_columns:
-        q1 = dataframe[column].quantile(0.25)
-        q3 = dataframe[column].quantile(0.75)
+        column_values = dataframe[column].dropna()
+
+        if column_values.empty:
+            continue
+
+        q1 = column_values.quantile(0.25)
+        q3 = column_values.quantile(0.75)
         iqr = q3 - q1
+
+        if iqr == 0:
+            continue
 
         lower_limit = q1 - 1.5 * iqr
         upper_limit = q3 + 1.5 * iqr
 
-        outliers = dataframe[
-            (dataframe[column] < lower_limit) |
-            (dataframe[column] > upper_limit)
-        ][column]
+        outliers = column_values[
+            (column_values < lower_limit) |
+            (column_values > upper_limit)
+        ]
 
         if not outliers.empty:
             outlier_result[column] = {
@@ -139,10 +168,17 @@ def check_category_consistency(dataframe: pd.DataFrame) -> Dict[str, Any]:
     Female, female, FEMALE
     """
     consistency_result = {}
-    text_columns = dataframe.select_dtypes(include="object").columns
 
-    for column in text_columns:
-        values = dataframe[column].dropna().astype(str)
+    for column in dataframe.columns:
+        column_data = dataframe[column]
+
+        if pd.api.types.is_numeric_dtype(column_data):
+            continue
+
+        values = column_data.dropna().astype(str)
+
+        if values.empty:
+            continue
 
         normalized_groups = {}
 
@@ -220,6 +256,9 @@ def generate_report(results: Dict[str, Any]) -> str:
         report.append("- No duplicate rows were found.")
     else:
         report.append(f"- Duplicate rows found: {duplicates['total_duplicate_rows']}")
+        report.append(
+            f"- Duplicate row indexes: {duplicates['duplicate_row_indexes']}"
+        )
     report.append("")
 
     report.append("## Data Types")
@@ -233,7 +272,8 @@ def generate_report(results: Dict[str, Any]) -> str:
     else:
         for column, details in outliers.items():
             report.append(
-                f"- Column `{column}` has {details['count']} possible outlier(s): {details['values']}"
+                f"- Column `{column}` has {details['count']} possible outlier(s): "
+                f"{details['values']}"
             )
     report.append("")
 
@@ -255,7 +295,8 @@ def generate_report(results: Dict[str, Any]) -> str:
             report.append(f"- Empty columns: {column_quality['empty_columns']}")
         if column_quality["high_missing_columns"]:
             report.append(
-                f"- Columns with many missing values: {column_quality['high_missing_columns']}"
+                f"- Columns with many missing values: "
+                f"{column_quality['high_missing_columns']}"
             )
     report.append("")
 
