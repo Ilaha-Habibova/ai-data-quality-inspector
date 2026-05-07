@@ -42,7 +42,8 @@ The current prototype can:
 - read a CSV file,
 - show dataset overview,
 - detect missing values,
-- detect duplicate rows,
+- detect exact duplicate rows,
+- detect possible duplicate records where the identifier is different but the remaining data is the same,
 - inspect column data types,
 - detect numeric outliers,
 - detect inconsistent text categories,
@@ -71,7 +72,7 @@ The Data Quality Agent collects the results from all tools, organizes them, and 
 | CSV Reader Tool | Loads the CSV file into the system. |
 | Dataset Overview Tool | Shows number of rows, columns, column names, and data types. |
 | Missing Value Tool | Detects empty or missing values in each column. |
-| Duplicate Checker Tool | Finds repeated rows in the dataset. |
+| Duplicate Checker Tool | Finds exact duplicate rows and possible duplicate records where ID values are different but other values are the same.|
 | Data Type Inspector Tool | Identifies numeric, text, and date-like columns. |
 | Outlier Detection Tool | Detects unusual numeric values using the IQR method. |
 | Category Consistency Tool | Finds inconsistent text categories, such as different capitalization or spelling. |
