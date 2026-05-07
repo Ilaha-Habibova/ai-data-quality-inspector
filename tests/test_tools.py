@@ -33,15 +33,33 @@ def test_check_missing_values():
     assert result["columns_with_missing_values"]["age"] == 1
 
 
-def test_check_duplicate_rows():
+def test_check_exact_duplicate_rows():
     dataframe = pd.DataFrame({
         "id": [1, 2, 1],
         "name": ["Alice", "Bob", "Alice"],
+        "age": [23, 30, 23],
     })
 
     result = check_duplicate_rows(dataframe)
 
     assert result["total_duplicate_rows"] == 1
+    assert result["duplicate_row_indexes"] == [2]
+
+
+def test_check_possible_duplicate_records_with_different_id():
+    dataframe = pd.DataFrame({
+        "id": [1, 6],
+        "name": ["Alice", "Alice"],
+        "age": [23, 23],
+        "email": ["alice@example.com", "alice@example.com"],
+    })
+
+    result = check_duplicate_rows(dataframe)
+
+    assert result["total_duplicate_rows"] == 0
+    assert result["possible_duplicate_records"] == 1
+    assert result["possible_duplicate_record_indexes"] == [1]
+    assert result["ignored_identifier_columns"] == ["id"]
 
 
 def test_inspect_data_types():
