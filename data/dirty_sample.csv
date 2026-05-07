@@ -4,6 +4,7 @@ id,name,age,gender,email,salary,join_date
 3,Charlie,,Male,charlie@example.com,1400,2024-03-10
 4,Diana,29,FEMALE,,1600,wrong-date
 5,Evan,200,Male,evan@example.com,99999,2024-04-01
+6,Alice,23,Female,alice@example.com,1200,2024-01-15
 1,Alice,23,Female,alice@example.com,1200,2024-01-15
 7,Frank,27,M,frank@example.com,,2024-05-11
 8,Grace,30,female,grace@example.com,1550,2024-06-18
