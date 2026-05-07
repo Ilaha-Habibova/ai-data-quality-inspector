@@ -15,7 +15,8 @@ The planned system is a Python-based AI-assisted data quality inspector for CSV 
 The system will check problems such as:
 
 - missing values,
-- duplicate rows,
+- exact duplicate rows,
+- possible duplicate records where identifier values are different but the remaining data is the same,
 - possible wrong data types,
 - invalid or suspicious values,
 - numeric outliers,
@@ -64,7 +65,7 @@ The system will use several tools. Each tool will have a clear responsibility.
 |---|---|
 | CSV Reader Tool | Reads the CSV file and converts it into a pandas DataFrame. |
 | Missing Value Tool | Detects missing values in each column and calculates how many values are missing. |
-| Duplicate Checker Tool | Finds repeated rows in the dataset. |
+| Duplicate Checker Tool | Receives the DataFrame and returns information about exact duplicate rows and possible duplicate records. |
 | Data Type Inspector Tool | Identifies numeric, text, date-like, and mixed-type columns. |
 | Outlier Detection Tool | Detects unusual numeric values using simple statistical rules. |
 | Category Consistency Tool | Finds inconsistent text categories, such as different capitalization or spelling. |
