@@ -6,18 +6,41 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT_DIR / "src"
-sys.path.insert(0, str(SRC_DIR))
+
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 from tools import (
+    read_csv_file,
     check_missing_values,
     check_duplicate_rows,
     inspect_data_types,
     detect_outliers,
     check_category_consistency,
+    check_column_quality,
 )
+
+
+def test_read_csv_file_valid_file(tmp_path):
+    csv_file = tmp_path / "sample.csv"
+    csv_file.write_text("id,name\n1,Alice\n2,Bob\n", encoding="utf-8")
+
+    dataframe = read_csv_file(str(csv_file))
+
+    assert len(dataframe) == 2
+    assert list(dataframe.columns) == ["id", "name"]
+
+
+def test_read_csv_file_rejects_non_csv_file(tmp_path):
+    text_file = tmp_path / "sample.txt"
+    text_file.write_text("not a csv file", encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        read_csv_file(str(text_file))
 
 
 def test_check_missing_values():
@@ -96,3 +119,16 @@ def test_check_category_consistency():
 
     assert "gender" in result
     assert "female" in result["gender"]
+
+
+def test_check_column_quality():
+    dataframe = pd.DataFrame({
+        "full_column": [1, 2, 3, 4],
+        "high_missing_column": [1, None, None, None],
+        "empty_column": [None, None, None, None],
+    })
+
+    result = check_column_quality(dataframe)
+
+    assert "empty_column" in result["empty_columns"]
+    assert "high_missing_column" in result["high_missing_columns"]
